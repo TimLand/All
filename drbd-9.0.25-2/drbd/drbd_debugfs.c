@@ -1716,6 +1716,15 @@ static const struct file_operations drbd_refcounts_fops = {
 
 static int drbd_compat_show(struct seq_file *m, void *ignored)
 {
+	seq_puts(m, "ib_device__no_has_ops\n");
+	seq_puts(m, "ib_post__no_const\n");
+	seq_puts(m, "blk_queue_make_request__yes_present\n");
+	seq_puts(m, "genl_policy__yes_in_ops\n");
+	seq_puts(m, "bio_start_io_acct__no_present\n");
+	seq_puts(m, "nla_nest_start_noflag__no_present\n");
+	seq_puts(m, "nla_parse_deprecated__no_present\n");
+	seq_puts(m, "allow_kernel_signal__no_present\n");
+	seq_puts(m, "part_stat_h__no_present\n");
 	return 0;
 }
 
