@@ -1,0 +1,8 @@
+<command-line>:0:0: warning: "KBUILD_MODNAME" redefined
+<command-line>:0:0: note: this is the location of the previous definition
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_blk_queue_plugged.c: In function ‘dummy’:
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_blk_queue_plugged.c:6:2: error: implicit declaration of function ‘blk_queue_plugged’; did you mean ‘blk_queue_tagged’? [-Werror=implicit-function-declaration]
+  blk_queue_plugged(q);
+  ^~~~~~~~~~~~~~~~~
+  blk_queue_tagged
+cc1: some warnings being treated as errors

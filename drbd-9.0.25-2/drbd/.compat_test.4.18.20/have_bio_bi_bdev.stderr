@@ -1,0 +1,7 @@
+<command-line>:0:0: warning: "KBUILD_MODNAME" redefined
+<command-line>:0:0: note: this is the location of the previous definition
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_bio_bi_bdev.c: In function ‘dummy’:
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_bio_bi_bdev.c:5:7: error: ‘struct bio’ has no member named ‘bi_bdev’; did you mean ‘bi_iter’?
+  bio->bi_bdev = NULL;
+       ^~~~~~~
+       bi_iter

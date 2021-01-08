@@ -1,0 +1,6 @@
+<command-line>:0:0: warning: "KBUILD_MODNAME" redefined
+<command-line>:0:0: note: this is the location of the previous definition
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_struct_kernel_param_ops.c: In function ‘main’:
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_struct_kernel_param_ops.c:6:26: warning: unused variable ‘ops’ [-Wunused-variable]
+  struct kernel_param_ops ops = {};
+                          ^~~

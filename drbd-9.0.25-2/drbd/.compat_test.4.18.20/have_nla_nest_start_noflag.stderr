@@ -1,0 +1,8 @@
+<command-line>:0:0: warning: "KBUILD_MODNAME" redefined
+<command-line>:0:0: note: this is the location of the previous definition
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_nla_nest_start_noflag.c: In function ‘dummy’:
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_nla_nest_start_noflag.c:6:9: error: implicit declaration of function ‘nla_nest_start_noflag’; did you mean ‘nla_nest_start’? [-Werror=implicit-function-declaration]
+  return nla_nest_start_noflag(skb, attrtype);
+         ^~~~~~~~~~~~~~~~~~~~~
+         nla_nest_start
+cc1: some warnings being treated as errors

@@ -1,0 +1,12 @@
+<command-line>:0:0: warning: "KBUILD_MODNAME" redefined
+<command-line>:0:0: note: this is the location of the previous definition
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_bio_rw.c:5:6: error: variable ‘dummy’ has initializer but incomplete type
+ enum bio_rw_flags dummy = BIO_RW;
+      ^~~~~~~~~~~~
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_bio_rw.c:5:27: error: ‘BIO_RW’ undeclared here (not in a function); did you mean ‘_IOWR’?
+ enum bio_rw_flags dummy = BIO_RW;
+                           ^~~~~~
+                           _IOWR
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_bio_rw.c:5:19: error: storage size of ‘dummy’ isn’t known
+ enum bio_rw_flags dummy = BIO_RW;
+                   ^~~~~

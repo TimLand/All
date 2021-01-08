@@ -1,0 +1,8 @@
+<command-line>:0:0: warning: "KBUILD_MODNAME" redefined
+<command-line>:0:0: note: this is the location of the previous definition
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_bio_free.c: In function ‘main’:
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_bio_free.c:8:2: error: implicit declaration of function ‘bio_free’; did you mean ‘bvec_free’? [-Werror=implicit-function-declaration]
+  bio_free(bio, bio_set);
+  ^~~~~~~~
+  bvec_free
+cc1: some warnings being treated as errors

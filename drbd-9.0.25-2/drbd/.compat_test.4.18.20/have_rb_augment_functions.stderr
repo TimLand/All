@@ -1,0 +1,21 @@
+<command-line>:0:0: warning: "KBUILD_MODNAME" redefined
+<command-line>:0:0: note: this is the location of the previous definition
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_rb_augment_functions.c: In function ‘foo’:
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_rb_augment_functions.c:8:2: error: implicit declaration of function ‘rb_augment_insert’ [-Werror=implicit-function-declaration]
+  rb_augment_insert((struct rb_node *) NULL,
+  ^~~~~~~~~~~~~~~~~
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_rb_augment_functions.c:9:7: error: ‘rb_augment_f’ undeclared (first use in this function); did you mean ‘mm_segment_t’?
+      (rb_augment_f) NULL,
+       ^~~~~~~~~~~~
+       mm_segment_t
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_rb_augment_functions.c:9:7: note: each undeclared identifier is reported only once for each function it appears in
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_rb_augment_functions.c:12:6: error: implicit declaration of function ‘rb_augment_erase_begin’ [-Werror=implicit-function-declaration]
+  n = rb_augment_erase_begin((struct rb_node *)NULL);
+      ^~~~~~~~~~~~~~~~~~~~~~
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_rb_augment_functions.c:12:4: warning: assignment makes pointer from integer without a cast [-Wint-conversion]
+  n = rb_augment_erase_begin((struct rb_node *)NULL);
+    ^
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_rb_augment_functions.c:13:2: error: implicit declaration of function ‘rb_augment_erase_end’ [-Werror=implicit-function-declaration]
+  rb_augment_erase_end((struct rb_node *) NULL, (rb_augment_f) NULL, NULL);
+  ^~~~~~~~~~~~~~~~~~~~
+cc1: some warnings being treated as errors

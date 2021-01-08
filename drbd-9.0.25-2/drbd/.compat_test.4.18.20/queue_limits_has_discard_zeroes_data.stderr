@@ -1,0 +1,6 @@
+<command-line>:0:0: warning: "KBUILD_MODNAME" redefined
+<command-line>:0:0: note: this is the location of the previous definition
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/queue_limits_has_discard_zeroes_data.c: In function ‘foo’:
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/queue_limits_has_discard_zeroes_data.c:7:5: error: ‘struct queue_limits’ has no member named ‘discard_zeroes_data’
+  lim->discard_zeroes_data = 1;
+     ^~

@@ -1,0 +1,6 @@
+<command-line>:0:0: warning: "KBUILD_MODNAME" redefined
+<command-line>:0:0: note: this is the location of the previous definition
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_part_stat_h.c:3:10: fatal error: linux/part_stat.h: No such file or directory
+ #include <linux/part_stat.h>
+          ^~~~~~~~~~~~~~~~~~~
+compilation terminated.

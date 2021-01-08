@@ -1,0 +1,8 @@
+<command-line>:0:0: warning: "KBUILD_MODNAME" redefined
+<command-line>:0:0: note: this is the location of the previous definition
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_bio_start_io_acct.c: In function ‘foo’:
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_bio_start_io_acct.c:8:8: error: implicit declaration of function ‘bio_start_io_acct’; did you mean ‘generic_start_io_acct’? [-Werror=implicit-function-declaration]
+  jif = bio_start_io_acct(NULL);
+        ^~~~~~~~~~~~~~~~~
+        generic_start_io_acct
+cc1: some warnings being treated as errors

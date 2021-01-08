@@ -1,0 +1,34 @@
+<command-line>:0:0: warning: "KBUILD_MODNAME" redefined
+<command-line>:0:0: note: this is the location of the previous definition
+In file included from ./include/linux/list.h:9:0,
+                 from ./include/linux/wait.h:7,
+                 from ./include/linux/wait_bit.h:8,
+                 from ./include/linux/fs.h:6,
+                 from ./include/linux/highmem.h:5,
+                 from ./include/linux/bio.h:21,
+                 from /root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_generic_start_io_acct_rw_sect_part.c:1:
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_generic_start_io_acct_rw_sect_part.c: In function ‘foo’:
+./include/linux/kernel.h:66:17: warning: passing argument 1 of ‘generic_start_io_acct’ makes pointer from integer without a cast [-Wint-conversion]
+ #define WRITE   1
+                 ^
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_generic_start_io_acct_rw_sect_part.c:7:24: note: in expansion of macro ‘WRITE’
+  generic_start_io_acct(WRITE, 0, (struct hd_struct *) NULL);
+                        ^~~~~
+In file included from /root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_generic_start_io_acct_rw_sect_part.c:1:0:
+./include/linux/bio.h:499:6: note: expected ‘struct request_queue *’ but argument is of type ‘int’
+ void generic_start_io_acct(struct request_queue *q, int rw,
+      ^~~~~~~~~~~~~~~~~~~~~
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_generic_start_io_acct_rw_sect_part.c:7:34: warning: passing argument 3 of ‘generic_start_io_acct’ makes integer from pointer without a cast [-Wint-conversion]
+  generic_start_io_acct(WRITE, 0, (struct hd_struct *) NULL);
+                                  ^
+In file included from /root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_generic_start_io_acct_rw_sect_part.c:1:0:
+./include/linux/bio.h:499:6: note: expected ‘long unsigned int’ but argument is of type ‘struct hd_struct *’
+ void generic_start_io_acct(struct request_queue *q, int rw,
+      ^~~~~~~~~~~~~~~~~~~~~
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_generic_start_io_acct_rw_sect_part.c:7:2: error: too few arguments to function ‘generic_start_io_acct’
+  generic_start_io_acct(WRITE, 0, (struct hd_struct *) NULL);
+  ^~~~~~~~~~~~~~~~~~~~~
+In file included from /root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_generic_start_io_acct_rw_sect_part.c:1:0:
+./include/linux/bio.h:499:6: note: declared here
+ void generic_start_io_acct(struct request_queue *q, int rw,
+      ^~~~~~~~~~~~~~~~~~~~~

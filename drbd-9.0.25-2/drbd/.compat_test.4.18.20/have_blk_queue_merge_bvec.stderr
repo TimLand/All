@@ -1,0 +1,8 @@
+<command-line>:0:0: warning: "KBUILD_MODNAME" redefined
+<command-line>:0:0: note: this is the location of the previous definition
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_blk_queue_merge_bvec.c: In function ‘dummy’:
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_blk_queue_merge_bvec.c:5:2: error: implicit declaration of function ‘blk_queue_merge_bvec’; did you mean ‘blk_queue_free_tags’? [-Werror=implicit-function-declaration]
+  blk_queue_merge_bvec(q, NULL);
+  ^~~~~~~~~~~~~~~~~~~~
+  blk_queue_free_tags
+cc1: some warnings being treated as errors

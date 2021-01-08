@@ -1,0 +1,53 @@
+<command-line>:0:0: warning: "KBUILD_MODNAME" redefined
+<command-line>:0:0: note: this is the location of the previous definition
+In file included from ./include/linux/kernel.h:10:0,
+                 from ./include/linux/list.h:9,
+                 from ./include/linux/wait.h:7,
+                 from ./include/linux/wait_bit.h:8,
+                 from ./include/linux/fs.h:6,
+                 from ./include/linux/highmem.h:5,
+                 from ./include/linux/bio.h:21,
+                 from /root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_bioset_create_front_pad.c:1:
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_bioset_create_front_pad.c: In function ‘dummy’:
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_bioset_create_front_pad.c:29:58: error: ‘bioset_create’ undeclared (first use in this function); did you mean ‘bioset_exit’?
+  BUILD_BUG_ON(!__same_type(&compat_check_bioset_create, &bioset_create));
+                                                          ^
+./include/linux/compiler.h:316:19: note: in definition of macro ‘__compiletime_assert’
+   bool __cond = !(condition);    \
+                   ^~~~~~~~~
+./include/linux/compiler.h:339:2: note: in expansion of macro ‘_compiletime_assert’
+  _compiletime_assert(condition, msg, __compiletime_assert_, __LINE__)
+  ^~~~~~~~~~~~~~~~~~~
+./include/linux/build_bug.h:45:37: note: in expansion of macro ‘compiletime_assert’
+ #define BUILD_BUG_ON_MSG(cond, msg) compiletime_assert(!(cond), msg)
+                                     ^~~~~~~~~~~~~~~~~~
+./include/linux/build_bug.h:69:2: note: in expansion of macro ‘BUILD_BUG_ON_MSG’
+  BUILD_BUG_ON_MSG(condition, "BUILD_BUG_ON failed: " #condition)
+  ^~~~~~~~~~~~~~~~
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_bioset_create_front_pad.c:29:2: note: in expansion of macro ‘BUILD_BUG_ON’
+  BUILD_BUG_ON(!__same_type(&compat_check_bioset_create, &bioset_create));
+  ^~~~~~~~~~~~
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_bioset_create_front_pad.c:29:16: note: in expansion of macro ‘__same_type’
+  BUILD_BUG_ON(!__same_type(&compat_check_bioset_create, &bioset_create));
+                ^~~~~~~~~~~
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_bioset_create_front_pad.c:29:58: note: each undeclared identifier is reported only once for each function it appears in
+  BUILD_BUG_ON(!__same_type(&compat_check_bioset_create, &bioset_create));
+                                                          ^
+./include/linux/compiler.h:316:19: note: in definition of macro ‘__compiletime_assert’
+   bool __cond = !(condition);    \
+                   ^~~~~~~~~
+./include/linux/compiler.h:339:2: note: in expansion of macro ‘_compiletime_assert’
+  _compiletime_assert(condition, msg, __compiletime_assert_, __LINE__)
+  ^~~~~~~~~~~~~~~~~~~
+./include/linux/build_bug.h:45:37: note: in expansion of macro ‘compiletime_assert’
+ #define BUILD_BUG_ON_MSG(cond, msg) compiletime_assert(!(cond), msg)
+                                     ^~~~~~~~~~~~~~~~~~
+./include/linux/build_bug.h:69:2: note: in expansion of macro ‘BUILD_BUG_ON_MSG’
+  BUILD_BUG_ON_MSG(condition, "BUILD_BUG_ON failed: " #condition)
+  ^~~~~~~~~~~~~~~~
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_bioset_create_front_pad.c:29:2: note: in expansion of macro ‘BUILD_BUG_ON’
+  BUILD_BUG_ON(!__same_type(&compat_check_bioset_create, &bioset_create));
+  ^~~~~~~~~~~~
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_bioset_create_front_pad.c:29:16: note: in expansion of macro ‘__same_type’
+  BUILD_BUG_ON(!__same_type(&compat_check_bioset_create, &bioset_create));
+                ^~~~~~~~~~~

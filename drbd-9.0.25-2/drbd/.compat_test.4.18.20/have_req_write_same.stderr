@@ -1,0 +1,12 @@
+<command-line>:0:0: warning: "KBUILD_MODNAME" redefined
+<command-line>:0:0: note: this is the location of the previous definition
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_req_write_same.c:6:6: error: variable ‘dummy’ has initializer but incomplete type
+ enum rq_flag_bits dummy = REQ_WRITE_SAME;
+      ^~~~~~~~~~~~
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_req_write_same.c:6:27: error: ‘REQ_WRITE_SAME’ undeclared here (not in a function); did you mean ‘REQ_OP_WRITE_SAME’?
+ enum rq_flag_bits dummy = REQ_WRITE_SAME;
+                           ^~~~~~~~~~~~~~
+                           REQ_OP_WRITE_SAME
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_req_write_same.c:6:19: error: storage size of ‘dummy’ isn’t known
+ enum rq_flag_bits dummy = REQ_WRITE_SAME;
+                   ^~~~~

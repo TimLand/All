@@ -1,0 +1,10 @@
+<command-line>:0:0: warning: "KBUILD_MODNAME" redefined
+<command-line>:0:0: note: this is the location of the previous definition
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_blk_queue_split_q_bio_bioset.c: In function ‘dummy’:
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_blk_queue_split_q_bio_bioset.c:5:2: error: too many arguments to function ‘blk_queue_split’
+  blk_queue_split(q, &bio, q->bio_split);
+  ^~~~~~~~~~~~~~~
+In file included from /root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_blk_queue_split_q_bio_bioset.c:1:0:
+./include/linux/blkdev.h:981:13: note: declared here
+ extern void blk_queue_split(struct request_queue *, struct bio **);
+             ^~~~~~~~~~~~~~~

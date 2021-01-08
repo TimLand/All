@@ -1,0 +1,45 @@
+<command-line>:0:0: warning: "KBUILD_MODNAME" redefined
+<command-line>:0:0: note: this is the location of the previous definition
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/ib_post_send_const_params.c: In function ‘foo’:
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/ib_post_send_const_params.c:23:33: warning: passing argument 2 of ‘ib_post_send’ discards ‘const’ qualifier from pointer target type [-Wdiscarded-qualifiers]
+         return ib_post_send(qp, send_wr, bad_send_wr);
+                                 ^~~~~~~
+In file included from /root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/ib_post_send_const_params.c:2:0:
+./include/rdma/ib_verbs.h:3356:19: note: expected ‘struct ib_send_wr *’ but argument is of type ‘const struct ib_send_wr *’
+ static inline int ib_post_send(struct ib_qp *qp,
+                   ^~~~~~~~~~~~
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/ib_post_send_const_params.c:23:42: error: passing argument 3 of ‘ib_post_send’ from incompatible pointer type [-Werror=incompatible-pointer-types]
+         return ib_post_send(qp, send_wr, bad_send_wr);
+                                          ^~~~~~~~~~~
+In file included from /root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/ib_post_send_const_params.c:2:0:
+./include/rdma/ib_verbs.h:3356:19: note: expected ‘struct ib_send_wr **’ but argument is of type ‘const struct ib_send_wr **’
+ static inline int ib_post_send(struct ib_qp *qp,
+                   ^~~~~~~~~~~~
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/ib_post_send_const_params.c:23:16: warning: ‘qp’ is used uninitialized in this function [-Wuninitialized]
+         return ib_post_send(qp, send_wr, bad_send_wr);
+                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/ib_post_send_const_params.c:23:16: warning: ‘send_wr’ is used uninitialized in this function [-Wuninitialized]
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/ib_post_send_const_params.c:23:16: warning: ‘bad_send_wr’ is used uninitialized in this function [-Wuninitialized]
+In file included from ./include/linux/ioport.h:13:0,
+                 from ./include/linux/device.h:15,
+                 from ./include/rdma/ib_verbs.h:43,
+                 from /root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/ib_post_send_const_params.c:2:
+./include/linux/compiler.h:339:38: error: call to ‘__compiletime_assert_22’ declared with attribute error: BUILD_BUG_ON failed: !(__same_type(ib_post_send_after_4_19, ib_post_send))
+  _compiletime_assert(condition, msg, __compiletime_assert_, __LINE__)
+                                      ^
+./include/linux/compiler.h:319:4: note: in definition of macro ‘__compiletime_assert’
+    prefix ## suffix();    \
+    ^~~~~~
+./include/linux/compiler.h:339:2: note: in expansion of macro ‘_compiletime_assert’
+  _compiletime_assert(condition, msg, __compiletime_assert_, __LINE__)
+  ^~~~~~~~~~~~~~~~~~~
+./include/linux/build_bug.h:45:37: note: in expansion of macro ‘compiletime_assert’
+ #define BUILD_BUG_ON_MSG(cond, msg) compiletime_assert(!(cond), msg)
+                                     ^~~~~~~~~~~~~~~~~~
+./include/linux/build_bug.h:69:2: note: in expansion of macro ‘BUILD_BUG_ON_MSG’
+  BUILD_BUG_ON_MSG(condition, "BUILD_BUG_ON failed: " #condition)
+  ^~~~~~~~~~~~~~~~
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/ib_post_send_const_params.c:22:9: note: in expansion of macro ‘BUILD_BUG_ON’
+         BUILD_BUG_ON(!(__same_type(ib_post_send_after_4_19, ib_post_send)));
+         ^~~~~~~~~~~~
+cc1: some warnings being treated as errors

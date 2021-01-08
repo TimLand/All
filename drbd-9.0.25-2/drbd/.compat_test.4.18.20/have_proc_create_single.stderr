@@ -1,0 +1,6 @@
+<command-line>:0:0: warning: "KBUILD_MODNAME" redefined
+<command-line>:0:0: note: this is the location of the previous definition
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_proc_create_single.c: In function ‘foo_seq_show’:
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_proc_create_single.c:6:1: warning: no return statement in function returning non-void [-Wreturn-type]
+ }
+ ^

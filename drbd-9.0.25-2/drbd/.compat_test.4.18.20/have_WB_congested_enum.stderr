@@ -1,0 +1,9 @@
+<command-line>:0:0: warning: "KBUILD_MODNAME" redefined
+<command-line>:0:0: note: this is the location of the previous definition
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_WB_congested_enum.c: In function ‘foo’:
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_WB_congested_enum.c:12:6: warning: unused variable ‘b’ [-Wunused-variable]
+  int b = WB_sync_congested;
+      ^
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_WB_congested_enum.c:11:6: warning: unused variable ‘a’ [-Wunused-variable]
+  int a = WB_async_congested;
+      ^

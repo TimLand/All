@@ -1,0 +1,9 @@
+<command-line>:0:0: warning: "KBUILD_MODNAME" redefined
+<command-line>:0:0: note: this is the location of the previous definition
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/ib_device_has_ops.c: In function ‘dummy’:
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/ib_device_has_ops.c:6:25: error: ‘struct ib_device’ has no member named ‘ops’
+  return (void *) &device->ops;
+                         ^~
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/ib_device_has_ops.c:7:1: warning: control reaches end of non-void function [-Wreturn-type]
+ }
+ ^

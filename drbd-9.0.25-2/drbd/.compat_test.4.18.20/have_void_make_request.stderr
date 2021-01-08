@@ -1,0 +1,25 @@
+<command-line>:0:0: warning: "KBUILD_MODNAME" redefined
+<command-line>:0:0: note: this is the location of the previous definition
+In file included from ./arch/x86/include/asm/current.h:5:0,
+                 from ./include/linux/sched.h:12,
+                 from ./include/linux/blkdev.h:5,
+                 from /root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_void_make_request.c:1:
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_void_make_request.c: In function ‘foo’:
+./include/linux/compiler.h:339:38: error: call to ‘__compiletime_assert_22’ declared with attribute error: BUILD_BUG_ON failed: !(__same_type(drbd_make_request, make_request_fn))
+  _compiletime_assert(condition, msg, __compiletime_assert_, __LINE__)
+                                      ^
+./include/linux/compiler.h:319:4: note: in definition of macro ‘__compiletime_assert’
+    prefix ## suffix();    \
+    ^~~~~~
+./include/linux/compiler.h:339:2: note: in expansion of macro ‘_compiletime_assert’
+  _compiletime_assert(condition, msg, __compiletime_assert_, __LINE__)
+  ^~~~~~~~~~~~~~~~~~~
+./include/linux/build_bug.h:45:37: note: in expansion of macro ‘compiletime_assert’
+ #define BUILD_BUG_ON_MSG(cond, msg) compiletime_assert(!(cond), msg)
+                                     ^~~~~~~~~~~~~~~~~~
+./include/linux/build_bug.h:69:2: note: in expansion of macro ‘BUILD_BUG_ON_MSG’
+  BUILD_BUG_ON_MSG(condition, "BUILD_BUG_ON failed: " #condition)
+  ^~~~~~~~~~~~~~~~
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_void_make_request.c:22:2: note: in expansion of macro ‘BUILD_BUG_ON’
+  BUILD_BUG_ON(!(__same_type(drbd_make_request, make_request_fn)));
+  ^~~~~~~~~~~~

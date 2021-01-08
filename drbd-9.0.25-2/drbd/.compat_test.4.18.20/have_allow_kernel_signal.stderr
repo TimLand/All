@@ -1,0 +1,8 @@
+<command-line>:0:0: warning: "KBUILD_MODNAME" redefined
+<command-line>:0:0: note: this is the location of the previous definition
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_allow_kernel_signal.c: In function ‘dummy’:
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_allow_kernel_signal.c:6:2: error: implicit declaration of function ‘allow_kernel_signal’; did you mean ‘allow_signal’? [-Werror=implicit-function-declaration]
+  allow_kernel_signal(sig);
+  ^~~~~~~~~~~~~~~~~~~
+  allow_signal
+cc1: some warnings being treated as errors

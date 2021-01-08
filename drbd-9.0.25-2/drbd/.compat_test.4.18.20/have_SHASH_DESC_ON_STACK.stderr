@@ -1,0 +1,10 @@
+<command-line>:0:0: warning: "KBUILD_MODNAME" redefined
+<command-line>:0:0: note: this is the location of the previous definition
+In file included from /root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_SHASH_DESC_ON_STACK.c:1:0:
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_SHASH_DESC_ON_STACK.c: In function ‘foo’:
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_SHASH_DESC_ON_STACK.c:6:22: warning: unused variable ‘desc’ [-Wunused-variable]
+  SHASH_DESC_ON_STACK(desc, &tfm);
+                      ^
+./include/crypto/hash.h:157:21: note: in definition of macro ‘SHASH_DESC_ON_STACK’
+  struct shash_desc *shash = (struct shash_desc *)__##shash##_desc
+                     ^~~~~

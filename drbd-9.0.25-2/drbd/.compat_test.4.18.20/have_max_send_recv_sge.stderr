@@ -1,0 +1,11 @@
+<command-line>:0:0: warning: "KBUILD_MODNAME" redefined
+<command-line>:0:0: note: this is the location of the previous definition
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_max_send_recv_sge.c: In function ‘foo’:
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_max_send_recv_sge.c:6:12: error: ‘struct ib_device_attr’ has no member named ‘max_send_sge’; did you mean ‘max_srq_sge’?
+  dev_attr->max_send_sge = 1;
+            ^~~~~~~~~~~~
+            max_srq_sge
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_max_send_recv_sge.c:7:12: error: ‘struct ib_device_attr’ has no member named ‘max_recv_sge’; did you mean ‘max_srq_sge’?
+  dev_attr->max_recv_sge = 1;
+            ^~~~~~~~~~~~
+            max_srq_sge

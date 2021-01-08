@@ -1,0 +1,11 @@
+<command-line>:0:0: warning: "KBUILD_MODNAME" redefined
+<command-line>:0:0: note: this is the location of the previous definition
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_ib_get_dma_mr.c: In function ‘foo’:
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_ib_get_dma_mr.c:8:7: error: implicit declaration of function ‘ib_get_dma_mr’; did you mean ‘ib_dereg_mr’? [-Werror=implicit-function-declaration]
+  mr = ib_get_dma_mr(pd, 0);
+       ^~~~~~~~~~~~~
+       ib_dereg_mr
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_ib_get_dma_mr.c:8:5: warning: assignment makes pointer from integer without a cast [-Wint-conversion]
+  mr = ib_get_dma_mr(pd, 0);
+     ^
+cc1: some warnings being treated as errors

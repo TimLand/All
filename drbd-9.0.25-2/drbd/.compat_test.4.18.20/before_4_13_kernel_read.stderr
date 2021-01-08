@@ -1,0 +1,48 @@
+<command-line>:0:0: warning: "KBUILD_MODNAME" redefined
+<command-line>:0:0: note: this is the location of the previous definition
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/before_4_13_kernel_read.c: In function ‘foo’:
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/before_4_13_kernel_read.c:19:27: warning: passing argument 2 of ‘kernel_read’ makes pointer from integer without a cast [-Wint-conversion]
+  return kernel_read(file, offset, addr, count);
+                           ^~~~~~
+In file included from /root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/before_4_13_kernel_read.c:1:0:
+./include/linux/fs.h:2875:16: note: expected ‘void *’ but argument is of type ‘loff_t {aka long long int}’
+ extern ssize_t kernel_read(struct file *, void *, size_t, loff_t *);
+                ^~~~~~~~~~~
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/before_4_13_kernel_read.c:19:35: warning: passing argument 3 of ‘kernel_read’ makes integer from pointer without a cast [-Wint-conversion]
+  return kernel_read(file, offset, addr, count);
+                                   ^~~~
+In file included from /root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/before_4_13_kernel_read.c:1:0:
+./include/linux/fs.h:2875:16: note: expected ‘size_t {aka long unsigned int}’ but argument is of type ‘char *’
+ extern ssize_t kernel_read(struct file *, void *, size_t, loff_t *);
+                ^~~~~~~~~~~
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/before_4_13_kernel_read.c:19:41: warning: passing argument 4 of ‘kernel_read’ makes pointer from integer without a cast [-Wint-conversion]
+  return kernel_read(file, offset, addr, count);
+                                         ^~~~~
+In file included from /root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/before_4_13_kernel_read.c:1:0:
+./include/linux/fs.h:2875:16: note: expected ‘loff_t * {aka long long int *}’ but argument is of type ‘long unsigned int’
+ extern ssize_t kernel_read(struct file *, void *, size_t, loff_t *);
+                ^~~~~~~~~~~
+In file included from ./include/linux/kernel.h:10:0,
+                 from ./include/linux/list.h:9,
+                 from ./include/linux/wait.h:7,
+                 from ./include/linux/wait_bit.h:8,
+                 from ./include/linux/fs.h:6,
+                 from /root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/before_4_13_kernel_read.c:1:
+./include/linux/compiler.h:339:38: error: call to ‘__compiletime_assert_18’ declared with attribute error: BUILD_BUG_ON failed: !(__same_type(kernel_read_before_4_13, kernel_read))
+  _compiletime_assert(condition, msg, __compiletime_assert_, __LINE__)
+                                      ^
+./include/linux/compiler.h:319:4: note: in definition of macro ‘__compiletime_assert’
+    prefix ## suffix();    \
+    ^~~~~~
+./include/linux/compiler.h:339:2: note: in expansion of macro ‘_compiletime_assert’
+  _compiletime_assert(condition, msg, __compiletime_assert_, __LINE__)
+  ^~~~~~~~~~~~~~~~~~~
+./include/linux/build_bug.h:45:37: note: in expansion of macro ‘compiletime_assert’
+ #define BUILD_BUG_ON_MSG(cond, msg) compiletime_assert(!(cond), msg)
+                                     ^~~~~~~~~~~~~~~~~~
+./include/linux/build_bug.h:69:2: note: in expansion of macro ‘BUILD_BUG_ON_MSG’
+  BUILD_BUG_ON_MSG(condition, "BUILD_BUG_ON failed: " #condition)
+  ^~~~~~~~~~~~~~~~
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/before_4_13_kernel_read.c:18:2: note: in expansion of macro ‘BUILD_BUG_ON’
+  BUILD_BUG_ON(!(__same_type(kernel_read_before_4_13, kernel_read)));
+  ^~~~~~~~~~~~

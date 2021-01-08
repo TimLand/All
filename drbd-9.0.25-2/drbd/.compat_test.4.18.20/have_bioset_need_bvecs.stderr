@@ -1,0 +1,8 @@
+<command-line>:0:0: warning: "KBUILD_MODNAME" redefined
+<command-line>:0:0: note: this is the location of the previous definition
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_bioset_need_bvecs.c: In function ‘dummy’:
+/root/Code/All/drbd-9.0.25-2/drbd/drbd-kernel-compat/tests/have_bioset_need_bvecs.c:8:2: error: implicit declaration of function ‘bioset_create’; did you mean ‘bioset_exit’? [-Werror=implicit-function-declaration]
+  bioset_create(16, 0, BIOSET_NEED_BVECS);
+  ^~~~~~~~~~~~~
+  bioset_exit
+cc1: some warnings being treated as errors
