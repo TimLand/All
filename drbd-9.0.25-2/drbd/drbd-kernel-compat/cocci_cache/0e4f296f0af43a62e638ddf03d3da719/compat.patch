@@ -1,0 +1,418 @@
+--- ./drbd_int.h
++++ /tmp/cocci-output-199219-c47b54-drbd_int.h
+@@ -1772,8 +1772,8 @@ extern struct kmem_cache *drbd_request_c
+ extern struct kmem_cache *drbd_ee_cache;	/* peer requests */
+ extern struct kmem_cache *drbd_bm_ext_cache;	/* bitmap extents */
+ extern struct kmem_cache *drbd_al_ext_cache;	/* activity log extents */
+-extern mempool_t drbd_request_mempool;
+-extern mempool_t drbd_ee_mempool;
++extern mempool_t *drbd_request_mempool;
++extern mempool_t *drbd_ee_mempool;
+ 
+ /* drbd's page pool, used to buffer data received from the peer,
+  * or data requested by the peer.
+@@ -1799,16 +1799,16 @@ extern wait_queue_head_t drbd_pp_wait;
+  * 128 should be plenty, currently we probably can get away with as few as 1.
+  */
+ #define DRBD_MIN_POOL_PAGES	128
+-extern mempool_t drbd_md_io_page_pool;
++extern mempool_t *drbd_md_io_page_pool;
+ 
+ /* We also need to make sure we get a bio
+  * when we need it for housekeeping purposes */
+-extern struct bio_set drbd_md_io_bio_set;
++extern struct bio_set * drbd_md_io_bio_set;
+ /* to allocate from that set */
+ extern struct bio *bio_alloc_drbd(gfp_t gfp_mask);
+ 
+ /* And a bio_set for cloning */
+-extern struct bio_set drbd_io_bio_set;
++extern struct bio_set * drbd_io_bio_set;
+ 
+ extern struct drbd_peer_device *create_peer_device(struct drbd_device *, struct drbd_connection *);
+ extern enum drbd_ret_code drbd_create_device(struct drbd_config_context *adm_ctx, unsigned int minor,
+--- drbd_bitmap.c
++++ /tmp/cocci-output-199219-83ee1d-drbd_bitmap.c
+@@ -1112,7 +1112,7 @@ static void drbd_bm_endio(struct bio *bi
+ 	bm_page_unlock_io(device, idx);
+ 
+ 	if (ctx->flags & BM_AIO_COPY_PAGES)
+-		mempool_free(bio->bi_io_vec[0].bv_page, &drbd_md_io_page_pool);
++		mempool_free(bio->bi_io_vec[0].bv_page, drbd_md_io_page_pool);
+ 
+ 	bio_put(bio);
+ 
+@@ -1149,8 +1149,8 @@ static void bm_page_io_async(struct drbd
+ 	bm_set_page_unchanged(b->bm_pages[page_nr]);
+ 
+ 	if (ctx->flags & BM_AIO_COPY_PAGES) {
+-		page = mempool_alloc(&drbd_md_io_page_pool,
+-				GFP_NOIO | __GFP_HIGHMEM);
++		page = mempool_alloc(drbd_md_io_page_pool,
++				     GFP_NOIO | __GFP_HIGHMEM);
+ 		copy_highpage(page, b->bm_pages[page_nr]);
+ 		bm_store_page_idx(page, page_nr);
+ 	} else
+--- drbd_sender.c
++++ /tmp/cocci-output-199219-a87dcb-drbd_sender.c
+@@ -23,7 +23,6 @@
+ #include <linux/random.h>
+ #include <linux/scatterlist.h>
+ #include <linux/overflow.h>
+-#include <linux/part_stat.h>
+ 
+ #include "drbd_int.h"
+ #include "drbd_protocol.h"
+--- drbd_transport_tcp.c
++++ /tmp/cocci-output-199219-4afa9a-drbd_transport_tcp.c
+@@ -637,6 +637,7 @@ retry:
+ 		list_del(&socket_c->list);
+ 		kfree(socket_c);
+ 	} else if (listener->listener.pending_accepts > 0) {
++		int ___addr_len;
+ 		listener->listener.pending_accepts--;
+ 		spin_unlock_bh(&listener->listener.waiters_lock);
+ 
+@@ -649,7 +650,8 @@ retry:
+ 		   from the listening socket. */
+ 		unregister_state_change(s_estab->sk, listener);
+ 
+-		s_estab->ops->getname(s_estab, (struct sockaddr *)&peer_addr, 2);
++		s_estab->ops->getname(s_estab, (struct sockaddr *)&peer_addr,
++				      &___addr_len, 2);
+ 
+ 		spin_lock_bh(&listener->listener.waiters_lock);
+ 		drbd_path2 = drbd_find_path_by_addr(&listener->listener, &peer_addr);
+--- drbd_receiver.c
++++ /tmp/cocci-output-199219-4708fc-drbd_receiver.c
+@@ -32,7 +32,6 @@
+ #include <linux/random.h>
+ #include <net/ipv6.h>
+ #include <linux/scatterlist.h>
+-#include <linux/part_stat.h>
+ 
+ #include "drbd_int.h"
+ #include "drbd_protocol.h"
+@@ -498,7 +497,7 @@ drbd_alloc_peer_req(struct drbd_peer_dev
+ 	if (drbd_insert_fault(device, DRBD_FAULT_AL_EE))
+ 		return NULL;
+ 
+-	peer_req = mempool_alloc(&drbd_ee_mempool, gfp_mask & ~__GFP_HIGHMEM);
++	peer_req = mempool_alloc(drbd_ee_mempool, gfp_mask & ~__GFP_HIGHMEM);
+ 	if (!peer_req) {
+ 		if (!(gfp_mask & __GFP_NOWARN))
+ 			drbd_err(device, "%s: allocation failed\n", __func__);
+@@ -526,7 +525,7 @@ void __drbd_free_peer_req(struct drbd_pe
+ 	D_ASSERT(peer_device, atomic_read(&peer_req->pending_bios) == 0);
+ 	D_ASSERT(peer_device, drbd_interval_empty(&peer_req->i));
+ 	drbd_free_page_chain(&peer_device->connection->transport, &peer_req->page_chain, is_net);
+-	mempool_free(peer_req, &drbd_ee_mempool);
++	mempool_free(peer_req, drbd_ee_mempool);
+ }
+ 
+ int drbd_free_peer_reqs(struct drbd_resource *resource, struct list_head *list, bool is_net_ee)
+@@ -9150,7 +9149,7 @@ static void destroy_peer_ack_req(struct
+ 		container_of(kref, struct drbd_request, kref);
+ 
+ 	list_del(&req->tl_requests);
+-	mempool_free(req, &drbd_request_mempool);
++	mempool_free(req, drbd_request_mempool);
+ }
+ 
+ static void cleanup_peer_ack_list(struct drbd_connection *connection)
+--- drbd_main.c
++++ /tmp/cocci-output-199219-60af42-drbd_main.c
+@@ -140,11 +140,11 @@ struct kmem_cache *drbd_request_cache;
+ struct kmem_cache *drbd_ee_cache;	/* peer requests */
+ struct kmem_cache *drbd_bm_ext_cache;	/* bitmap extents */
+ struct kmem_cache *drbd_al_ext_cache;	/* activity log extents */
+-mempool_t drbd_request_mempool;
+-mempool_t drbd_ee_mempool;
+-mempool_t drbd_md_io_page_pool;
+-struct bio_set drbd_md_io_bio_set;
+-struct bio_set drbd_io_bio_set;
++mempool_t *drbd_request_mempool;
++mempool_t *drbd_ee_mempool;
++mempool_t *drbd_md_io_page_pool;
++struct bio_set * drbd_md_io_bio_set;
++struct bio_set * drbd_io_bio_set;
+ 
+ /* I do not use a standard mempool, because:
+    1) I want to hand out the pre-allocated objects first.
+@@ -165,10 +165,10 @@ static const struct block_device_operati
+ 
+ struct bio *bio_alloc_drbd(gfp_t gfp_mask)
+ {
+-	if (!bioset_initialized(&drbd_md_io_bio_set))
++	if (!(drbd_md_io_bio_set != NULL))
+ 		return bio_alloc(gfp_mask, 1);
+ 
+-	return bio_alloc_bioset(gfp_mask, 1, &drbd_md_io_bio_set);
++	return bio_alloc_bioset(gfp_mask, 1, drbd_md_io_bio_set);
+ }
+ 
+ #ifdef __CHECKER__
+@@ -589,8 +589,8 @@ static int drbd_thread_setup(void *arg)
+ 	unsigned long flags;
+ 	int retval;
+ 
+-	allow_kernel_signal(DRBD_SIGKILL);
+-	allow_kernel_signal(SIGXCPU);
++	allow_signal(DRBD_SIGKILL);
++	allow_signal(SIGXCPU);
+ 
+ 	if (connection)
+ 		kref_get(&connection->kref);
+@@ -2799,11 +2799,26 @@ static void drbd_destroy_mempools(void)
+ 
+ 	/* D_ASSERT(device, atomic_read(&drbd_pp_vacant)==0); */
+ 
+-	bioset_exit(&drbd_io_bio_set);
+-	bioset_exit(&drbd_md_io_bio_set);
+-	mempool_exit(&drbd_md_io_page_pool);
+-	mempool_exit(&drbd_ee_mempool);
+-	mempool_exit(&drbd_request_mempool);
++	if (drbd_io_bio_set) {
++		bioset_free(drbd_io_bio_set);
++		drbd_io_bio_set = NULL;
++	}
++	if (drbd_md_io_bio_set) {
++		bioset_free(drbd_md_io_bio_set);
++		drbd_md_io_bio_set = NULL;
++	}
++	if (drbd_md_io_page_pool) {
++		mempool_destroy(drbd_md_io_page_pool);
++		drbd_md_io_page_pool = NULL;
++	}
++	if (drbd_ee_mempool) {
++		mempool_destroy(drbd_ee_mempool);
++		drbd_ee_mempool = NULL;
++	}
++	if (drbd_request_mempool) {
++		mempool_destroy(drbd_request_mempool);
++		drbd_request_mempool = NULL;
++	}
+ 	if (drbd_ee_cache)
+ 		kmem_cache_destroy(drbd_ee_cache);
+ 	if (drbd_request_cache)
+@@ -2849,25 +2864,24 @@ static int drbd_create_mempools(void)
+ 		goto Enomem;
+ 
+ 	/* mempools */
+-	ret = bioset_init(&drbd_io_bio_set, BIO_POOL_SIZE, 0, 0);
+-	if (ret)
++	drbd_io_bio_set = bioset_create(BIO_POOL_SIZE, 0, 0);
++	if (drbd_io_bio_set == NULL)
+ 		goto Enomem;
+ 
+-	ret = bioset_init(&drbd_md_io_bio_set, DRBD_MIN_POOL_PAGES, 0,
+-			  BIOSET_NEED_BVECS);
+-	if (ret)
++	drbd_md_io_bio_set = bioset_create(DRBD_MIN_POOL_PAGES, 0,
++					   BIOSET_NEED_BVECS);
++	if (drbd_md_io_bio_set == NULL)
+ 		goto Enomem;
+ 
+-	ret = mempool_init_page_pool(&drbd_md_io_page_pool, DRBD_MIN_POOL_PAGES, 0);
++	ret = ((drbd_md_io_page_pool = mempool_create_page_pool(DRBD_MIN_POOL_PAGES, 0)) == NULL ? -ENOMEM : 0);
+ 	if (ret)
+ 		goto Enomem;
+ 
+-	ret = mempool_init_slab_pool(&drbd_request_mempool, number,
+-				     drbd_request_cache);
++	ret = ((drbd_request_mempool = mempool_create_slab_pool(number, drbd_request_cache)) == NULL ? -ENOMEM : 0);
+ 	if (ret)
+ 		goto Enomem;
+ 
+-	ret = mempool_init_slab_pool(&drbd_ee_mempool, number, drbd_ee_cache);
++	ret = ((drbd_ee_mempool = mempool_create_slab_pool(number, drbd_ee_cache)) == NULL ? -ENOMEM : 0);
+ 	if (ret)
+ 		goto Enomem;
+ 
+@@ -2980,7 +2994,7 @@ void drbd_reclaim_resource(struct rcu_he
+ 		kref_debug_put(&connection->kref_debug, 9);
+ 		kref_put(&connection->kref, drbd_destroy_connection);
+ 	}
+-	mempool_free(resource->peer_ack_req, &drbd_request_mempool);
++	mempool_free(resource->peer_ack_req, drbd_request_mempool);
+ 	kref_debug_put(&resource->kref_debug, 8);
+ 	kref_put(&resource->kref, drbd_destroy_resource);
+ }
+@@ -3710,7 +3724,7 @@ enum drbd_ret_code drbd_create_device(st
+ 
+ 	init_rwsem(&device->uuid_sem);
+ 
+-	q = blk_alloc_queue(drbd_make_request, NUMA_NO_NODE);
++	q = blk_alloc_queue(GFP_KERNEL);
+ 	if (!q)
+ 		goto out_no_q;
+ 	device->rq_queue = q;
+@@ -3734,6 +3748,7 @@ enum drbd_ret_code drbd_create_device(st
+ 
+ 	init_bdev_info(q->backing_dev_info, drbd_congested, device);
+ 
++	blk_queue_make_request(q, drbd_make_request);
+ 	blk_queue_write_cache(q, true, true);
+ 
+ 	device->md_io.page = alloc_page(GFP_KERNEL);
+--- drbd_nla.c
++++ /tmp/cocci-output-199219-88c768-drbd_nla.c
+@@ -35,8 +35,7 @@ int drbd_nla_parse_nested(struct nlattr
+ 
+ 	err = drbd_nla_check_mandatory(maxtype, nla);
+ 	if (!err)
+-		err = nla_parse_nested_deprecated(tb, maxtype, nla, policy,
+-						  NULL);
++		err = nla_parse_nested(tb, maxtype, nla, policy, NULL);
+ 
+ 	return err;
+ }
+--- drbd_nl.c
++++ /tmp/cocci-output-199219-16d5b9-drbd_nl.c
+@@ -111,7 +111,7 @@ static int drbd_msg_put_info(struct sk_b
+ 	if (!info || !info[0])
+ 		return 0;
+ 
+-	nla = nla_nest_start_noflag(skb, DRBD_NLA_CFG_REPLY);
++	nla = nla_nest_start(skb, DRBD_NLA_CFG_REPLY);
+ 	if (!nla)
+ 		return err;
+ 
+@@ -138,7 +138,7 @@ static int drbd_msg_sprintf_info(struct
+ 	int aligned_len;
+ 	char *msg_buf;
+ 
+-	nla = nla_nest_start_noflag(skb, DRBD_NLA_CFG_REPLY);
++	nla = nla_nest_start(skb, DRBD_NLA_CFG_REPLY);
+ 	if (!nla)
+ 		return err;
+ 
+@@ -4970,7 +4970,7 @@ static int nla_put_drbd_cfg_context(stru
+ 				    struct drbd_path *path)
+ {
+ 	struct nlattr *nla;
+-	nla = nla_nest_start_noflag(skb, DRBD_NLA_CFG_CONTEXT);
++	nla = nla_nest_start(skb, DRBD_NLA_CFG_CONTEXT);
+ 	if (!nla)
+ 		goto nla_put_failure;
+ 	if (device)
+@@ -5227,7 +5227,7 @@ int drbd_adm_dump_connections_done(struc
+ static int connection_paths_to_skb(struct sk_buff *skb, struct drbd_connection *connection)
+ {
+ 	struct drbd_path *path;
+-	struct nlattr *tla = nla_nest_start_noflag(skb, DRBD_NLA_PATH_PARMS);
++	struct nlattr *tla = nla_nest_start(skb, DRBD_NLA_PATH_PARMS);
+ 	if (!tla)
+ 		goto nla_put_failure;
+ 
+--- drbd_req.c
++++ /tmp/cocci-output-199219-34bf17-drbd_req.c
+@@ -26,7 +26,7 @@ static struct drbd_request *drbd_req_new
+ {
+ 	struct drbd_request *req;
+ 
+-	req = mempool_alloc(&drbd_request_mempool, GFP_NOIO);
++	req = mempool_alloc(drbd_request_mempool, GFP_NOIO);
+ 	if (!req)
+ 		return NULL;
+ 
+@@ -65,7 +65,7 @@ static struct drbd_request *drbd_req_new
+ static void req_destroy_no_send_peer_ack(struct kref *kref)
+ {
+ 	struct drbd_request *req = container_of(kref, struct drbd_request, kref);
+-	mempool_free(req, &drbd_request_mempool);
++	mempool_free(req, drbd_request_mempool);
+ }
+ 
+ void drbd_queue_peer_ack(struct drbd_resource *resource, struct drbd_request *req)
+@@ -270,7 +270,8 @@ void drbd_req_destroy(struct kref *kref)
+ 				drbd_queue_peer_ack(resource, peer_ack_req);
+ 				peer_ack_req = NULL;
+ 			} else
+-				mempool_free(peer_ack_req, &drbd_request_mempool);
++				mempool_free(peer_ack_req,
++					     drbd_request_mempool);
+ 		}
+ 		req->device = NULL;
+ 		resource->peer_ack_req = req;
+@@ -280,7 +281,7 @@ void drbd_req_destroy(struct kref *kref)
+ 		if (!peer_ack_req)
+ 			resource->last_peer_acked_dagtag = req->dagtag_sector;
+ 	} else
+-		mempool_free(req, &drbd_request_mempool);
++		mempool_free(req, drbd_request_mempool);
+ 
+ 	/* In both branches of the if above, the reference to device gets released */
+ 	kref_debug_put(&device->kref_debug, 6);
+@@ -416,7 +417,9 @@ void drbd_req_complete(struct drbd_reque
+ 		start_new_tl_epoch(device->resource);
+ 
+ 	/* Update disk stats */
+-	bio_end_io_acct(req->master_bio, req->start_jif);
++	generic_end_io_acct(req->device->rq_queue,
++			    bio_data_dir(req->master_bio),
++			    &req->device->vdisk->part0, req->start_jif);
+ 
+ 	/* If READ failed,
+ 	 * have it be pushed back to the retry work queue,
+@@ -1507,7 +1510,7 @@ static void drbd_queue_write(struct drbd
+ static void req_make_private_bio(struct drbd_request *req, struct bio *bio_src)
+ {
+ 	struct bio *bio;
+-	bio = bio_clone_fast(bio_src, GFP_NOIO, &drbd_io_bio_set);
++	bio = bio_clone_fast(bio_src, GFP_NOIO, drbd_io_bio_set);
+ 
+ 	req->private_bio = bio;
+ 
+@@ -1552,7 +1555,10 @@ drbd_request_prepare(struct drbd_device
+ 	}
+ 
+ 	/* Update disk stats */
+-	req->start_jif = bio_start_io_acct(req->master_bio);
++	req->start_jif = start_jif;
++	generic_start_io_acct(req->device->rq_queue,
++			      bio_data_dir(req->master_bio), req->i.size >> 9,
++			      &req->device->vdisk->part0);
+ 
+ 	if (get_ldev(device))
+ 		req_make_private_bio(req, bio);
+--- drbd_debugfs.c
++++ /tmp/cocci-output-199219-1654f0-drbd_debugfs.c
+@@ -1716,6 +1716,19 @@ static const struct file_operations drbd
+ 
+ static int drbd_compat_show(struct seq_file *m, void *ignored)
+ {
++	seq_puts(m, "ib_device__no_has_ops\n");
++	seq_puts(m, "ib_post__no_const\n");
++	seq_puts(m, "blk_queue_make_request__yes_present\n");
++	seq_puts(m, "sock_ops__no_returns_addr_len\n");
++	seq_puts(m, "bioset_init__no_present\n");
++	seq_puts(m, "bioset_init__no_present__yes_bio_clone_fast\n");
++	seq_puts(m, "bioset_init__no_present__yes_need_bvecs\n");
++	seq_puts(m, "genl_policy__yes_in_ops\n");
++	seq_puts(m, "bio_start_io_acct__no_present\n");
++	seq_puts(m, "nla_nest_start_noflag__no_present\n");
++	seq_puts(m, "nla_parse_deprecated__no_present\n");
++	seq_puts(m, "allow_kernel_signal__no_present\n");
++	seq_puts(m, "part_stat_h__no_present\n");
+ 	return 0;
+ }
+ 
+--- drbd-headers/linux/genl_magic_func.h
++++ drbd-headers/linux/genl_magic_func.h
+@@ -233,6 +233,7 @@ static const char *CONCAT_(GENL_MAGIC_FAMILY, _genl_cmd_to_str)(__u8 cmd)
+ {								\
+ 	handler							\
+ 	.cmd = op_name,						\
++	.policy	= CONCAT_(GENL_MAGIC_FAMILY, _tla_nl_policy),	\
+ },
+ 
+ #define ZZZ_genl_ops		CONCAT_(GENL_MAGIC_FAMILY, _genl_ops)
+@@ -291,7 +292,6 @@ static struct genl_family ZZZ_genl_family __read_mostly = {
+ #ifdef COMPAT_HAVE_GENL_FAMILY_PARALLEL_OPS
+ 	.parallel_ops = true,
+ #endif
+-	.policy = CONCAT_(GENL_MAGIC_FAMILY, _tla_nl_policy),
+ };
+ 
+ /*

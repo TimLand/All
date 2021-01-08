@@ -1,0 +1,688 @@
+--- ./drbd_int.h
++++ /tmp/cocci-output-199427-b70ec8-drbd_int.h
+@@ -1772,8 +1772,8 @@ extern struct kmem_cache *drbd_request_c
+ extern struct kmem_cache *drbd_ee_cache;	/* peer requests */
+ extern struct kmem_cache *drbd_bm_ext_cache;	/* bitmap extents */
+ extern struct kmem_cache *drbd_al_ext_cache;	/* activity log extents */
+-extern mempool_t drbd_request_mempool;
+-extern mempool_t drbd_ee_mempool;
++extern mempool_t *drbd_request_mempool;
++extern mempool_t *drbd_ee_mempool;
+ 
+ /* drbd's page pool, used to buffer data received from the peer,
+  * or data requested by the peer.
+@@ -1799,16 +1799,16 @@ extern wait_queue_head_t drbd_pp_wait;
+  * 128 should be plenty, currently we probably can get away with as few as 1.
+  */
+ #define DRBD_MIN_POOL_PAGES	128
+-extern mempool_t drbd_md_io_page_pool;
++extern mempool_t *drbd_md_io_page_pool;
+ 
+ /* We also need to make sure we get a bio
+  * when we need it for housekeeping purposes */
+-extern struct bio_set drbd_md_io_bio_set;
++extern struct bio_set * drbd_md_io_bio_set;
+ /* to allocate from that set */
+ extern struct bio *bio_alloc_drbd(gfp_t gfp_mask);
+ 
+ /* And a bio_set for cloning */
+-extern struct bio_set drbd_io_bio_set;
++extern struct bio_set * drbd_io_bio_set;
+ 
+ extern struct drbd_peer_device *create_peer_device(struct drbd_device *, struct drbd_connection *);
+ extern enum drbd_ret_code drbd_create_device(struct drbd_config_context *adm_ctx, unsigned int minor,
+@@ -1902,7 +1902,7 @@ extern void drbd_check_peers(struct drbd
+ extern void drbd_check_peers_new_current_uuid(struct drbd_device *);
+ extern void drbd_ping_peer(struct drbd_connection *connection);
+ extern struct drbd_peer_device *peer_device_by_node_id(struct drbd_device *, int);
+-extern void repost_up_to_date_fn(struct timer_list *t);
++extern void repost_up_to_date_fn(unsigned long data);
+ 
+ static inline void ov_out_of_sync_print(struct drbd_peer_device *peer_device)
+ {
+@@ -1940,8 +1940,8 @@ extern int w_restart_disk_io(struct drbd
+ extern int w_start_resync(struct drbd_work *, int);
+ extern int w_send_uuids(struct drbd_work *, int);
+ 
+-extern void resync_timer_fn(struct timer_list *t);
+-extern void start_resync_timer_fn(struct timer_list *t);
++extern void resync_timer_fn(unsigned long data);
++extern void start_resync_timer_fn(unsigned long data);
+ 
+ extern void drbd_endio_write_sec_final(struct drbd_peer_request *peer_req);
+ 
+@@ -2027,7 +2027,7 @@ extern void apply_unacked_peer_requests(
+ extern struct drbd_connection *drbd_connection_by_node_id(struct drbd_resource *, int);
+ extern struct drbd_connection *drbd_get_connection_by_node_id(struct drbd_resource *, int);
+ extern void queue_queued_twopc(struct drbd_resource *resource);
+-extern void queued_twopc_timer_fn(struct timer_list *t);
++extern void queued_twopc_timer_fn(unsigned long data);
+ extern bool drbd_have_local_disk(struct drbd_resource *resource);
+ extern enum drbd_state_rv drbd_support_2pc_resize(struct drbd_resource *resource);
+ extern enum determine_dev_size
+@@ -2071,8 +2071,8 @@ static inline void drbd_generic_make_req
+ void drbd_bump_write_ordering(struct drbd_resource *resource, struct drbd_backing_dev *bdev,
+ 			      enum write_ordering_e wo);
+ 
+-extern void twopc_timer_fn(struct timer_list *t);
+-extern void connect_timer_fn(struct timer_list *t);
++extern void twopc_timer_fn(unsigned long data);
++extern void connect_timer_fn(unsigned long data);
+ 
+ /* drbd_proc.c */
+ extern struct proc_dir_entry *drbd_proc;
+--- ./drbd_req.h
++++ /tmp/cocci-output-199427-885b56-drbd_req.h
+@@ -295,7 +295,7 @@ extern void __req_mod(struct drbd_reques
+ 		struct bio_and_error *m);
+ extern void complete_master_bio(struct drbd_device *device,
+ 		struct bio_and_error *m);
+-extern void request_timer_fn(struct timer_list *t);
++extern void request_timer_fn(unsigned long data);
+ extern void tl_walk(struct drbd_connection *connection, enum drbd_req_event what);
+ extern void _tl_walk(struct drbd_connection *connection, enum drbd_req_event what);
+ extern void __tl_walk(struct drbd_resource *const resource,
+--- drbd_bitmap.c
++++ /tmp/cocci-output-199427-e2479c-drbd_bitmap.c
+@@ -1112,7 +1112,7 @@ static void drbd_bm_endio(struct bio *bi
+ 	bm_page_unlock_io(device, idx);
+ 
+ 	if (ctx->flags & BM_AIO_COPY_PAGES)
+-		mempool_free(bio->bi_io_vec[0].bv_page, &drbd_md_io_page_pool);
++		mempool_free(bio->bi_io_vec[0].bv_page, drbd_md_io_page_pool);
+ 
+ 	bio_put(bio);
+ 
+@@ -1149,8 +1149,8 @@ static void bm_page_io_async(struct drbd
+ 	bm_set_page_unchanged(b->bm_pages[page_nr]);
+ 
+ 	if (ctx->flags & BM_AIO_COPY_PAGES) {
+-		page = mempool_alloc(&drbd_md_io_page_pool,
+-				GFP_NOIO | __GFP_HIGHMEM);
++		page = mempool_alloc(drbd_md_io_page_pool,
++				     GFP_NOIO | __GFP_HIGHMEM);
+ 		copy_highpage(page, b->bm_pages[page_nr]);
+ 		bm_store_page_idx(page, page_nr);
+ 	} else
+--- drbd_sender.c
++++ /tmp/cocci-output-199427-6cd9fa-drbd_sender.c
+@@ -23,7 +23,6 @@
+ #include <linux/random.h>
+ #include <linux/scatterlist.h>
+ #include <linux/overflow.h>
+-#include <linux/part_stat.h>
+ 
+ #include "drbd_int.h"
+ #include "drbd_protocol.h"
+@@ -487,9 +486,9 @@ int w_send_uuids(struct drbd_work *w, in
+ 	return 0;
+ }
+ 
+-void resync_timer_fn(struct timer_list *t)
++void resync_timer_fn(unsigned long data)
+ {
+-	struct drbd_peer_device *peer_device = from_timer(peer_device, t, resync_timer);
++	struct drbd_peer_device *peer_device = (struct drbd_peer_device *)data;
+ 
+ 	if (test_bit(SYNC_TARGET_TO_BEHIND, &peer_device->flags))
+ 		return;
+@@ -1889,9 +1888,9 @@ void drbd_rs_controller_reset(struct drb
+ 	rcu_read_unlock();
+ }
+ 
+-void start_resync_timer_fn(struct timer_list *t)
++void start_resync_timer_fn(unsigned long data)
+ {
+-	struct drbd_peer_device *peer_device = from_timer(peer_device, t, start_resync_timer);
++	struct drbd_peer_device *peer_device = (struct drbd_peer_device *)data;
+ 	drbd_peer_device_post_work(peer_device, RS_START);
+ }
+ 
+@@ -2263,9 +2262,9 @@ static int do_md_sync(struct drbd_device
+ 	return 0;
+ }
+ 
+-void repost_up_to_date_fn(struct timer_list *t)
++void repost_up_to_date_fn(unsigned long data)
+ {
+-	struct drbd_resource *resource = from_timer(resource, t, repost_up_to_date_timer);
++	struct drbd_resource *resource = (struct drbd_resource *)data;
+ 	drbd_post_work(resource, TRY_BECOME_UP_TO_DATE);
+ }
+ 
+--- drbd_transport_tcp.c
++++ /tmp/cocci-output-199427-d2e0b6-drbd_transport_tcp.c
+@@ -637,6 +637,7 @@ retry:
+ 		list_del(&socket_c->list);
+ 		kfree(socket_c);
+ 	} else if (listener->listener.pending_accepts > 0) {
++		int ___addr_len;
+ 		listener->listener.pending_accepts--;
+ 		spin_unlock_bh(&listener->listener.waiters_lock);
+ 
+@@ -649,7 +650,8 @@ retry:
+ 		   from the listening socket. */
+ 		unregister_state_change(s_estab->sk, listener);
+ 
+-		s_estab->ops->getname(s_estab, (struct sockaddr *)&peer_addr, 2);
++		s_estab->ops->getname(s_estab, (struct sockaddr *)&peer_addr,
++				      &___addr_len, 2);
+ 
+ 		spin_lock_bh(&listener->listener.waiters_lock);
+ 		drbd_path2 = drbd_find_path_by_addr(&listener->listener, &peer_addr);
+--- drbd_receiver.c
++++ /tmp/cocci-output-199427-547e3a-drbd_receiver.c
+@@ -32,7 +32,6 @@
+ #include <linux/random.h>
+ #include <net/ipv6.h>
+ #include <linux/scatterlist.h>
+-#include <linux/part_stat.h>
+ 
+ #include "drbd_int.h"
+ #include "drbd_protocol.h"
+@@ -498,7 +497,7 @@ drbd_alloc_peer_req(struct drbd_peer_dev
+ 	if (drbd_insert_fault(device, DRBD_FAULT_AL_EE))
+ 		return NULL;
+ 
+-	peer_req = mempool_alloc(&drbd_ee_mempool, gfp_mask & ~__GFP_HIGHMEM);
++	peer_req = mempool_alloc(drbd_ee_mempool, gfp_mask & ~__GFP_HIGHMEM);
+ 	if (!peer_req) {
+ 		if (!(gfp_mask & __GFP_NOWARN))
+ 			drbd_err(device, "%s: allocation failed\n", __func__);
+@@ -526,7 +525,7 @@ void __drbd_free_peer_req(struct drbd_pe
+ 	D_ASSERT(peer_device, atomic_read(&peer_req->pending_bios) == 0);
+ 	D_ASSERT(peer_device, drbd_interval_empty(&peer_req->i));
+ 	drbd_free_page_chain(&peer_device->connection->transport, &peer_req->page_chain, is_net);
+-	mempool_free(peer_req, &drbd_ee_mempool);
++	mempool_free(peer_req, drbd_ee_mempool);
+ }
+ 
+ int drbd_free_peer_reqs(struct drbd_resource *resource, struct list_head *list, bool is_net_ee)
+@@ -734,9 +733,9 @@ static bool initial_states_received(stru
+ 	return rv;
+ }
+ 
+-void connect_timer_fn(struct timer_list *t)
++void connect_timer_fn(unsigned long data)
+ {
+-	struct drbd_connection *connection = from_timer(connection, t, connect_timer);
++	struct drbd_connection *connection = (struct drbd_connection *)data;
+ 	struct drbd_resource *resource = connection->resource;
+ 	unsigned long irq_flags;
+ 
+@@ -5950,9 +5949,9 @@ int abort_nested_twopc_work(struct drbd_
+ 	return 0;
+ }
+ 
+-void twopc_timer_fn(struct timer_list *t)
++void twopc_timer_fn(unsigned long data)
+ {
+-	struct drbd_resource *resource = from_timer(resource, t, twopc_timer);
++	struct drbd_resource *resource = (struct drbd_resource *)data;
+ 	unsigned long irq_flags;
+ 
+ 	spin_lock_irqsave(&resource->req_lock, irq_flags);
+@@ -6208,9 +6207,9 @@ static int queued_twopc_work(struct drbd
+ 	return 0;
+ }
+ 
+-void queued_twopc_timer_fn(struct timer_list *t)
++void queued_twopc_timer_fn(unsigned long data)
+ {
+-	struct drbd_resource *resource = from_timer(resource, t, queued_twopc_timer);
++	struct drbd_resource *resource = (struct drbd_resource *)data;
+ 	struct queued_twopc *q;
+ 	unsigned long irq_flags;
+ 	unsigned long time = twopc_timeout(resource) / 4;
+@@ -7921,7 +7920,7 @@ static void cleanup_resync_leftovers(str
+ 	wake_up(&peer_device->device->misc_wait);
+ 
+ 	del_timer_sync(&peer_device->resync_timer);
+-	resync_timer_fn(&peer_device->resync_timer);
++	resync_timer_fn((unsigned long)peer_device);
+ 	del_timer_sync(&peer_device->start_resync_timer);
+ }
+ 
+@@ -9150,7 +9149,7 @@ static void destroy_peer_ack_req(struct
+ 		container_of(kref, struct drbd_request, kref);
+ 
+ 	list_del(&req->tl_requests);
+-	mempool_free(req, &drbd_request_mempool);
++	mempool_free(req, drbd_request_mempool);
+ }
+ 
+ static void cleanup_peer_ack_list(struct drbd_connection *connection)
+--- drbd_main.c
++++ /tmp/cocci-output-199427-c56171-drbd_main.c
+@@ -55,7 +55,7 @@
+ 
+ static int drbd_open(struct block_device *bdev, fmode_t mode);
+ static void drbd_release(struct gendisk *gd, fmode_t mode);
+-static void md_sync_timer_fn(struct timer_list *t);
++static void md_sync_timer_fn(unsigned long data);
+ static int w_bitmap_io(struct drbd_work *w, int unused);
+ static int flush_send_buffer(struct drbd_connection *connection, enum drbd_stream drbd_stream);
+ static u64 __set_bitmap_slots(struct drbd_device *device, u64 bitmap_uuid, u64 do_nodes) __must_hold(local);
+@@ -140,11 +140,11 @@ struct kmem_cache *drbd_request_cache;
+ struct kmem_cache *drbd_ee_cache;	/* peer requests */
+ struct kmem_cache *drbd_bm_ext_cache;	/* bitmap extents */
+ struct kmem_cache *drbd_al_ext_cache;	/* activity log extents */
+-mempool_t drbd_request_mempool;
+-mempool_t drbd_ee_mempool;
+-mempool_t drbd_md_io_page_pool;
+-struct bio_set drbd_md_io_bio_set;
+-struct bio_set drbd_io_bio_set;
++mempool_t *drbd_request_mempool;
++mempool_t *drbd_ee_mempool;
++mempool_t *drbd_md_io_page_pool;
++struct bio_set * drbd_md_io_bio_set;
++struct bio_set * drbd_io_bio_set;
+ 
+ /* I do not use a standard mempool, because:
+    1) I want to hand out the pre-allocated objects first.
+@@ -165,10 +165,10 @@ static const struct block_device_operati
+ 
+ struct bio *bio_alloc_drbd(gfp_t gfp_mask)
+ {
+-	if (!bioset_initialized(&drbd_md_io_bio_set))
++	if (!(drbd_md_io_bio_set != NULL))
+ 		return bio_alloc(gfp_mask, 1);
+ 
+-	return bio_alloc_bioset(gfp_mask, 1, &drbd_md_io_bio_set);
++	return bio_alloc_bioset(gfp_mask, 1, drbd_md_io_bio_set);
+ }
+ 
+ #ifdef __CHECKER__
+@@ -589,8 +589,8 @@ static int drbd_thread_setup(void *arg)
+ 	unsigned long flags;
+ 	int retval;
+ 
+-	allow_kernel_signal(DRBD_SIGKILL);
+-	allow_kernel_signal(SIGXCPU);
++	allow_signal(DRBD_SIGKILL);
++	allow_signal(SIGXCPU);
+ 
+ 	if (connection)
+ 		kref_get(&connection->kref);
+@@ -2799,11 +2799,26 @@ static void drbd_destroy_mempools(void)
+ 
+ 	/* D_ASSERT(device, atomic_read(&drbd_pp_vacant)==0); */
+ 
+-	bioset_exit(&drbd_io_bio_set);
+-	bioset_exit(&drbd_md_io_bio_set);
+-	mempool_exit(&drbd_md_io_page_pool);
+-	mempool_exit(&drbd_ee_mempool);
+-	mempool_exit(&drbd_request_mempool);
++	if (drbd_io_bio_set) {
++		bioset_free(drbd_io_bio_set);
++		drbd_io_bio_set = NULL;
++	}
++	if (drbd_md_io_bio_set) {
++		bioset_free(drbd_md_io_bio_set);
++		drbd_md_io_bio_set = NULL;
++	}
++	if (drbd_md_io_page_pool) {
++		mempool_destroy(drbd_md_io_page_pool);
++		drbd_md_io_page_pool = NULL;
++	}
++	if (drbd_ee_mempool) {
++		mempool_destroy(drbd_ee_mempool);
++		drbd_ee_mempool = NULL;
++	}
++	if (drbd_request_mempool) {
++		mempool_destroy(drbd_request_mempool);
++		drbd_request_mempool = NULL;
++	}
+ 	if (drbd_ee_cache)
+ 		kmem_cache_destroy(drbd_ee_cache);
+ 	if (drbd_request_cache)
+@@ -2849,25 +2864,24 @@ static int drbd_create_mempools(void)
+ 		goto Enomem;
+ 
+ 	/* mempools */
+-	ret = bioset_init(&drbd_io_bio_set, BIO_POOL_SIZE, 0, 0);
+-	if (ret)
++	drbd_io_bio_set = bioset_create(BIO_POOL_SIZE, 0, 0);
++	if (drbd_io_bio_set == NULL)
+ 		goto Enomem;
+ 
+-	ret = bioset_init(&drbd_md_io_bio_set, DRBD_MIN_POOL_PAGES, 0,
+-			  BIOSET_NEED_BVECS);
+-	if (ret)
++	drbd_md_io_bio_set = bioset_create(DRBD_MIN_POOL_PAGES, 0,
++					   BIOSET_NEED_BVECS);
++	if (drbd_md_io_bio_set == NULL)
+ 		goto Enomem;
+ 
+-	ret = mempool_init_page_pool(&drbd_md_io_page_pool, DRBD_MIN_POOL_PAGES, 0);
++	ret = ((drbd_md_io_page_pool = mempool_create_page_pool(DRBD_MIN_POOL_PAGES, 0)) == NULL ? -ENOMEM : 0);
+ 	if (ret)
+ 		goto Enomem;
+ 
+-	ret = mempool_init_slab_pool(&drbd_request_mempool, number,
+-				     drbd_request_cache);
++	ret = ((drbd_request_mempool = mempool_create_slab_pool(number, drbd_request_cache)) == NULL ? -ENOMEM : 0);
+ 	if (ret)
+ 		goto Enomem;
+ 
+-	ret = mempool_init_slab_pool(&drbd_ee_mempool, number, drbd_ee_cache);
++	ret = ((drbd_ee_mempool = mempool_create_slab_pool(number, drbd_ee_cache)) == NULL ? -ENOMEM : 0);
+ 	if (ret)
+ 		goto Enomem;
+ 
+@@ -2980,7 +2994,7 @@ void drbd_reclaim_resource(struct rcu_he
+ 		kref_debug_put(&connection->kref_debug, 9);
+ 		kref_put(&connection->kref, drbd_destroy_connection);
+ 	}
+-	mempool_free(resource->peer_ack_req, &drbd_request_mempool);
++	mempool_free(resource->peer_ack_req, drbd_request_mempool);
+ 	kref_debug_put(&resource->kref_debug, 8);
+ 	kref_put(&resource->kref, drbd_destroy_resource);
+ }
+@@ -3265,9 +3279,9 @@ void drbd_flush_peer_acks(struct drbd_re
+ 	spin_unlock_irq(&resource->req_lock);
+ }
+ 
+-static void peer_ack_timer_fn(struct timer_list *t)
++static void peer_ack_timer_fn(unsigned long data)
+ {
+-	struct drbd_resource *resource = from_timer(resource, t, peer_ack_timer);
++	struct drbd_resource *resource = (struct drbd_resource *)data;
+ 
+ 	drbd_flush_peer_acks(resource);
+ }
+@@ -3404,8 +3418,10 @@ struct drbd_resource *drbd_create_resour
+ 	INIT_LIST_HEAD(&resource->connections);
+ 	INIT_LIST_HEAD(&resource->transfer_log);
+ 	INIT_LIST_HEAD(&resource->peer_ack_list);
+-	timer_setup(&resource->peer_ack_timer, peer_ack_timer_fn, 0);
+-	timer_setup(&resource->repost_up_to_date_timer, repost_up_to_date_fn, 0);
++	setup_timer(&resource->peer_ack_timer, peer_ack_timer_fn,
++		    (unsigned long)resource);
++	setup_timer(&resource->repost_up_to_date_timer, repost_up_to_date_fn,
++		    (unsigned long)resource);
+ 	sema_init(&resource->state_sem, 1);
+ 	resource->role[NOW] = R_SECONDARY;
+ 	if (set_resource_options(resource, res_opts))
+@@ -3422,11 +3438,13 @@ struct drbd_resource *drbd_create_resour
+ 	init_waitqueue_head(&resource->twopc_wait);
+ 	init_waitqueue_head(&resource->barrier_wait);
+ 	INIT_LIST_HEAD(&resource->twopc_parents);
+-	timer_setup(&resource->twopc_timer, twopc_timer_fn, 0);
++	setup_timer(&resource->twopc_timer, twopc_timer_fn,
++		    (unsigned long)resource);
+ 	INIT_LIST_HEAD(&resource->twopc_work.list);
+ 	INIT_LIST_HEAD(&resource->queued_twopc);
+ 	spin_lock_init(&resource->queued_twopc_lock);
+-	timer_setup(&resource->queued_twopc_timer, queued_twopc_timer_fn, 0);
++	setup_timer(&resource->queued_twopc_timer, queued_twopc_timer_fn,
++		    (unsigned long)resource);
+ 	drbd_init_workqueue(&resource->work);
+ 	drbd_thread_init(resource, &resource->worker, drbd_worker, "worker");
+ 	drbd_thread_start(&resource->worker);
+@@ -3487,7 +3505,8 @@ struct drbd_connection *drbd_create_conn
+ 	mutex_init(&connection->mutex[CONTROL_STREAM]);
+ 
+ 	INIT_LIST_HEAD(&connection->connect_timer_work.list);
+-	timer_setup(&connection->connect_timer, connect_timer_fn, 0);
++	setup_timer(&connection->connect_timer, connect_timer_fn,
++		    (unsigned long)connection);
+ 
+ 	drbd_thread_init(resource, &connection->receiver, drbd_receiver, "receiver");
+ 	connection->receiver.connection = connection;
+@@ -3601,11 +3620,13 @@ struct drbd_peer_device *create_peer_dev
+ 		return NULL;
+ 	}
+ 
+-	timer_setup(&peer_device->start_resync_timer, start_resync_timer_fn, 0);
++	setup_timer(&peer_device->start_resync_timer, start_resync_timer_fn,
++		    (unsigned long)peer_device);
+ 
+ 	INIT_LIST_HEAD(&peer_device->resync_work.list);
+ 	peer_device->resync_work.cb  = w_resync_timer;
+-	timer_setup(&peer_device->resync_timer, resync_timer_fn, 0);
++	setup_timer(&peer_device->resync_timer, resync_timer_fn,
++		    (unsigned long)peer_device);
+ 
+ 	INIT_LIST_HEAD(&peer_device->propagate_uuids_work.list);
+ 	peer_device->propagate_uuids_work.cb = w_send_uuids;
+@@ -3701,8 +3722,10 @@ enum drbd_ret_code drbd_create_device(st
+ 	spin_lock_init(&device->pending_bitmap_work.q_lock);
+ 	INIT_LIST_HEAD(&device->pending_bitmap_work.q);
+ 
+-	timer_setup(&device->md_sync_timer, md_sync_timer_fn, 0);
+-	timer_setup(&device->request_timer, request_timer_fn, 0);
++	setup_timer(&device->md_sync_timer, md_sync_timer_fn,
++		    (unsigned long)device);
++	setup_timer(&device->request_timer, request_timer_fn,
++		    (unsigned long)device);
+ 
+ 	init_waitqueue_head(&device->misc_wait);
+ 	init_waitqueue_head(&device->al_wait);
+@@ -3710,7 +3733,7 @@ enum drbd_ret_code drbd_create_device(st
+ 
+ 	init_rwsem(&device->uuid_sem);
+ 
+-	q = blk_alloc_queue(drbd_make_request, NUMA_NO_NODE);
++	q = blk_alloc_queue(GFP_KERNEL);
+ 	if (!q)
+ 		goto out_no_q;
+ 	device->rq_queue = q;
+@@ -3734,6 +3757,7 @@ enum drbd_ret_code drbd_create_device(st
+ 
+ 	init_bdev_info(q->backing_dev_info, drbd_congested, device);
+ 
++	blk_queue_make_request(q, drbd_make_request);
+ 	blk_queue_write_cache(q, true, true);
+ 
+ 	device->md_io.page = alloc_page(GFP_KERNEL);
+@@ -5621,9 +5645,9 @@ bool drbd_md_test_peer_flag(struct drbd_
+ 	return md->peers[peer_device->node_id].flags & flag;
+ }
+ 
+-static void md_sync_timer_fn(struct timer_list *t)
++static void md_sync_timer_fn(unsigned long data)
+ {
+-	struct drbd_device *device = from_timer(device, t, md_sync_timer);
++	struct drbd_device *device = (struct drbd_device *)data;
+ 	drbd_device_post_work(device, MD_SYNC);
+ }
+ 
+--- drbd_nla.c
++++ /tmp/cocci-output-199427-f2629d-drbd_nla.c
+@@ -35,8 +35,7 @@ int drbd_nla_parse_nested(struct nlattr
+ 
+ 	err = drbd_nla_check_mandatory(maxtype, nla);
+ 	if (!err)
+-		err = nla_parse_nested_deprecated(tb, maxtype, nla, policy,
+-						  NULL);
++		err = nla_parse_nested(tb, maxtype, nla, policy, NULL);
+ 
+ 	return err;
+ }
+--- drbd_nl.c
++++ /tmp/cocci-output-199427-a4552a-drbd_nl.c
+@@ -111,7 +111,7 @@ static int drbd_msg_put_info(struct sk_b
+ 	if (!info || !info[0])
+ 		return 0;
+ 
+-	nla = nla_nest_start_noflag(skb, DRBD_NLA_CFG_REPLY);
++	nla = nla_nest_start(skb, DRBD_NLA_CFG_REPLY);
+ 	if (!nla)
+ 		return err;
+ 
+@@ -138,7 +138,7 @@ static int drbd_msg_sprintf_info(struct
+ 	int aligned_len;
+ 	char *msg_buf;
+ 
+-	nla = nla_nest_start_noflag(skb, DRBD_NLA_CFG_REPLY);
++	nla = nla_nest_start(skb, DRBD_NLA_CFG_REPLY);
+ 	if (!nla)
+ 		return err;
+ 
+@@ -1988,9 +1988,19 @@ static void decide_on_discard_support(st
+ 		 * topology on all peers. */
+ 		blk_queue_discard_granularity(q, 512);
+ 		q->limits.max_discard_sectors = drbd_max_discard_sectors(device->resource);
+-		blk_queue_flag_set(QUEUE_FLAG_DISCARD, q);
++		{
++			unsigned long ____flags0;
++			spin_lock_irqsave(q->queue_lock, ____flags0);
++			queue_flag_set(QUEUE_FLAG_DISCARD, q);
++			spin_unlock_irqrestore(q->queue_lock, ____flags0);
++		}
+ 	} else {
+-		blk_queue_flag_clear(QUEUE_FLAG_DISCARD, q);
++		{
++			unsigned long ____flags1;
++			spin_lock_irqsave(q->queue_lock, ____flags1);
++			queue_flag_clear(QUEUE_FLAG_DISCARD, q);
++			spin_unlock_irqrestore(q->queue_lock, ____flags1);
++		}
+ 		blk_queue_discard_granularity(q, 0);
+ 		q->limits.max_discard_sectors = 0;
+ 	}
+@@ -4970,7 +4980,7 @@ static int nla_put_drbd_cfg_context(stru
+ 				    struct drbd_path *path)
+ {
+ 	struct nlattr *nla;
+-	nla = nla_nest_start_noflag(skb, DRBD_NLA_CFG_CONTEXT);
++	nla = nla_nest_start(skb, DRBD_NLA_CFG_CONTEXT);
+ 	if (!nla)
+ 		goto nla_put_failure;
+ 	if (device)
+@@ -5227,7 +5237,7 @@ int drbd_adm_dump_connections_done(struc
+ static int connection_paths_to_skb(struct sk_buff *skb, struct drbd_connection *connection)
+ {
+ 	struct drbd_path *path;
+-	struct nlattr *tla = nla_nest_start_noflag(skb, DRBD_NLA_PATH_PARMS);
++	struct nlattr *tla = nla_nest_start(skb, DRBD_NLA_PATH_PARMS);
+ 	if (!tla)
+ 		goto nla_put_failure;
+ 
+--- drbd_req.c
++++ /tmp/cocci-output-199427-032210-drbd_req.c
+@@ -26,7 +26,7 @@ static struct drbd_request *drbd_req_new
+ {
+ 	struct drbd_request *req;
+ 
+-	req = mempool_alloc(&drbd_request_mempool, GFP_NOIO);
++	req = mempool_alloc(drbd_request_mempool, GFP_NOIO);
+ 	if (!req)
+ 		return NULL;
+ 
+@@ -65,7 +65,7 @@ static struct drbd_request *drbd_req_new
+ static void req_destroy_no_send_peer_ack(struct kref *kref)
+ {
+ 	struct drbd_request *req = container_of(kref, struct drbd_request, kref);
+-	mempool_free(req, &drbd_request_mempool);
++	mempool_free(req, drbd_request_mempool);
+ }
+ 
+ void drbd_queue_peer_ack(struct drbd_resource *resource, struct drbd_request *req)
+@@ -270,7 +270,8 @@ void drbd_req_destroy(struct kref *kref)
+ 				drbd_queue_peer_ack(resource, peer_ack_req);
+ 				peer_ack_req = NULL;
+ 			} else
+-				mempool_free(peer_ack_req, &drbd_request_mempool);
++				mempool_free(peer_ack_req,
++					     drbd_request_mempool);
+ 		}
+ 		req->device = NULL;
+ 		resource->peer_ack_req = req;
+@@ -280,7 +281,7 @@ void drbd_req_destroy(struct kref *kref)
+ 		if (!peer_ack_req)
+ 			resource->last_peer_acked_dagtag = req->dagtag_sector;
+ 	} else
+-		mempool_free(req, &drbd_request_mempool);
++		mempool_free(req, drbd_request_mempool);
+ 
+ 	/* In both branches of the if above, the reference to device gets released */
+ 	kref_debug_put(&device->kref_debug, 6);
+@@ -416,7 +417,9 @@ void drbd_req_complete(struct drbd_reque
+ 		start_new_tl_epoch(device->resource);
+ 
+ 	/* Update disk stats */
+-	bio_end_io_acct(req->master_bio, req->start_jif);
++	generic_end_io_acct(req->device->rq_queue,
++			    bio_data_dir(req->master_bio),
++			    &req->device->vdisk->part0, req->start_jif);
+ 
+ 	/* If READ failed,
+ 	 * have it be pushed back to the retry work queue,
+@@ -1507,7 +1510,7 @@ static void drbd_queue_write(struct drbd
+ static void req_make_private_bio(struct drbd_request *req, struct bio *bio_src)
+ {
+ 	struct bio *bio;
+-	bio = bio_clone_fast(bio_src, GFP_NOIO, &drbd_io_bio_set);
++	bio = bio_clone_fast(bio_src, GFP_NOIO, drbd_io_bio_set);
+ 
+ 	req->private_bio = bio;
+ 
+@@ -1552,7 +1555,10 @@ drbd_request_prepare(struct drbd_device
+ 	}
+ 
+ 	/* Update disk stats */
+-	req->start_jif = bio_start_io_acct(req->master_bio);
++	req->start_jif = start_jif;
++	generic_start_io_acct(req->device->rq_queue,
++			      bio_data_dir(req->master_bio), req->i.size >> 9,
++			      &req->device->vdisk->part0);
+ 
+ 	if (get_ldev(device))
+ 		req_make_private_bio(req, bio);
+@@ -2286,9 +2292,9 @@ static bool net_timeout_reached(struct d
+  * to expire twice (worst case) to become effective. Good enough.
+  */
+ 
+-void request_timer_fn(struct timer_list *t)
++void request_timer_fn(unsigned long data)
+ {
+-	struct drbd_device *device = from_timer(device, t, request_timer);
++	struct drbd_device *device = (struct drbd_device *)data;
+ 	struct drbd_connection *connection;
+ 	struct drbd_request *req_read, *req_write;
+ 	unsigned long oldest_submit_jif;
+--- drbd_debugfs.c
++++ /tmp/cocci-output-199427-b34336-drbd_debugfs.c
+@@ -1716,6 +1716,22 @@ static const struct file_operations drbd
+ 
+ static int drbd_compat_show(struct seq_file *m, void *ignored)
+ {
++	seq_puts(m, "timer_setup__no_present\n");
++	seq_puts(m, "ib_device__no_has_ops\n");
++	seq_puts(m, "ib_post__no_const\n");
++	seq_puts(m, "blk_queue_make_request__yes_present\n");
++	seq_puts(m, "kernel_read__yes_before_4_13\n");
++	seq_puts(m, "sock_ops__no_returns_addr_len\n");
++	seq_puts(m, "bioset_init__no_present\n");
++	seq_puts(m, "bioset_init__no_present__yes_bio_clone_fast\n");
++	seq_puts(m, "bioset_init__no_present__yes_need_bvecs\n");
++	seq_puts(m, "genl_policy__yes_in_ops\n");
++	seq_puts(m, "blk_queue_flag_set__no_present\n");
++	seq_puts(m, "bio_start_io_acct__no_present\n");
++	seq_puts(m, "nla_nest_start_noflag__no_present\n");
++	seq_puts(m, "nla_parse_deprecated__no_present\n");
++	seq_puts(m, "allow_kernel_signal__no_present\n");
++	seq_puts(m, "part_stat_h__no_present\n");
+ 	return 0;
+ }
+ 
+--- drbd-headers/linux/genl_magic_func.h
++++ drbd-headers/linux/genl_magic_func.h
+@@ -233,6 +233,7 @@ static const char *CONCAT_(GENL_MAGIC_FAMILY, _genl_cmd_to_str)(__u8 cmd)
+ {								\
+ 	handler							\
+ 	.cmd = op_name,						\
++	.policy	= CONCAT_(GENL_MAGIC_FAMILY, _tla_nl_policy),	\
+ },
+ 
+ #define ZZZ_genl_ops		CONCAT_(GENL_MAGIC_FAMILY, _genl_ops)
+@@ -291,7 +292,6 @@ static struct genl_family ZZZ_genl_family __read_mostly = {
+ #ifdef COMPAT_HAVE_GENL_FAMILY_PARALLEL_OPS
+ 	.parallel_ops = true,
+ #endif
+-	.policy = CONCAT_(GENL_MAGIC_FAMILY, _tla_nl_policy),
+ };
+ 
+ /*

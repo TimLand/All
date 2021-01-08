@@ -1,0 +1,147 @@
+--- drbd_sender.c
++++ /tmp/cocci-output-198991-825185-drbd_sender.c
+@@ -23,7 +23,6 @@
+ #include <linux/random.h>
+ #include <linux/scatterlist.h>
+ #include <linux/overflow.h>
+-#include <linux/part_stat.h>
+ 
+ #include "drbd_int.h"
+ #include "drbd_protocol.h"
+--- drbd_receiver.c
++++ /tmp/cocci-output-198991-fc83a1-drbd_receiver.c
+@@ -32,7 +32,6 @@
+ #include <linux/random.h>
+ #include <net/ipv6.h>
+ #include <linux/scatterlist.h>
+-#include <linux/part_stat.h>
+ 
+ #include "drbd_int.h"
+ #include "drbd_protocol.h"
+--- drbd_main.c
++++ /tmp/cocci-output-198991-9a43b3-drbd_main.c
+@@ -3710,7 +3710,7 @@ enum drbd_ret_code drbd_create_device(st
+ 
+ 	init_rwsem(&device->uuid_sem);
+ 
+-	q = blk_alloc_queue(drbd_make_request, NUMA_NO_NODE);
++	q = blk_alloc_queue(GFP_KERNEL);
+ 	if (!q)
+ 		goto out_no_q;
+ 	device->rq_queue = q;
+@@ -3734,6 +3734,7 @@ enum drbd_ret_code drbd_create_device(st
+ 
+ 	init_bdev_info(q->backing_dev_info, drbd_congested, device);
+ 
++	blk_queue_make_request(q, drbd_make_request);
+ 	blk_queue_write_cache(q, true, true);
+ 
+ 	device->md_io.page = alloc_page(GFP_KERNEL);
+--- drbd_nla.c
++++ /tmp/cocci-output-198991-9027ff-drbd_nla.c
+@@ -35,8 +35,7 @@ int drbd_nla_parse_nested(struct nlattr
+ 
+ 	err = drbd_nla_check_mandatory(maxtype, nla);
+ 	if (!err)
+-		err = nla_parse_nested_deprecated(tb, maxtype, nla, policy,
+-						  NULL);
++		err = nla_parse_nested(tb, maxtype, nla, policy, NULL);
+ 
+ 	return err;
+ }
+--- drbd_nl.c
++++ /tmp/cocci-output-198991-5b5335-drbd_nl.c
+@@ -111,7 +111,7 @@ static int drbd_msg_put_info(struct sk_b
+ 	if (!info || !info[0])
+ 		return 0;
+ 
+-	nla = nla_nest_start_noflag(skb, DRBD_NLA_CFG_REPLY);
++	nla = nla_nest_start(skb, DRBD_NLA_CFG_REPLY);
+ 	if (!nla)
+ 		return err;
+ 
+@@ -138,7 +138,7 @@ static int drbd_msg_sprintf_info(struct
+ 	int aligned_len;
+ 	char *msg_buf;
+ 
+-	nla = nla_nest_start_noflag(skb, DRBD_NLA_CFG_REPLY);
++	nla = nla_nest_start(skb, DRBD_NLA_CFG_REPLY);
+ 	if (!nla)
+ 		return err;
+ 
+@@ -4970,7 +4970,7 @@ static int nla_put_drbd_cfg_context(stru
+ 				    struct drbd_path *path)
+ {
+ 	struct nlattr *nla;
+-	nla = nla_nest_start_noflag(skb, DRBD_NLA_CFG_CONTEXT);
++	nla = nla_nest_start(skb, DRBD_NLA_CFG_CONTEXT);
+ 	if (!nla)
+ 		goto nla_put_failure;
+ 	if (device)
+@@ -5227,7 +5227,7 @@ int drbd_adm_dump_connections_done(struc
+ static int connection_paths_to_skb(struct sk_buff *skb, struct drbd_connection *connection)
+ {
+ 	struct drbd_path *path;
+-	struct nlattr *tla = nla_nest_start_noflag(skb, DRBD_NLA_PATH_PARMS);
++	struct nlattr *tla = nla_nest_start(skb, DRBD_NLA_PATH_PARMS);
+ 	if (!tla)
+ 		goto nla_put_failure;
+ 
+--- drbd_req.c
++++ /tmp/cocci-output-198991-a0fa1a-drbd_req.c
+@@ -416,7 +416,9 @@ void drbd_req_complete(struct drbd_reque
+ 		start_new_tl_epoch(device->resource);
+ 
+ 	/* Update disk stats */
+-	bio_end_io_acct(req->master_bio, req->start_jif);
++	generic_end_io_acct(req->device->rq_queue,
++			    bio_data_dir(req->master_bio),
++			    &req->device->vdisk->part0, req->start_jif);
+ 
+ 	/* If READ failed,
+ 	 * have it be pushed back to the retry work queue,
+@@ -1552,7 +1554,10 @@ drbd_request_prepare(struct drbd_device
+ 	}
+ 
+ 	/* Update disk stats */
+-	req->start_jif = bio_start_io_acct(req->master_bio);
++	req->start_jif = start_jif;
++	generic_start_io_acct(req->device->rq_queue,
++			      bio_data_dir(req->master_bio), req->i.size >> 9,
++			      &req->device->vdisk->part0);
+ 
+ 	if (get_ldev(device))
+ 		req_make_private_bio(req, bio);
+--- drbd_debugfs.c
++++ /tmp/cocci-output-198991-106948-drbd_debugfs.c
+@@ -1716,6 +1716,12 @@ static const struct file_operations drbd
+ 
+ static int drbd_compat_show(struct seq_file *m, void *ignored)
+ {
++	seq_puts(m, "blk_queue_make_request__yes_present\n");
++	seq_puts(m, "genl_policy__yes_in_ops\n");
++	seq_puts(m, "bio_start_io_acct__no_present\n");
++	seq_puts(m, "nla_nest_start_noflag__no_present\n");
++	seq_puts(m, "nla_parse_deprecated__no_present\n");
++	seq_puts(m, "part_stat_h__no_present\n");
+ 	return 0;
+ }
+ 
+--- drbd-headers/linux/genl_magic_func.h
++++ drbd-headers/linux/genl_magic_func.h
+@@ -233,6 +233,7 @@ static const char *CONCAT_(GENL_MAGIC_FAMILY, _genl_cmd_to_str)(__u8 cmd)
+ {								\
+ 	handler							\
+ 	.cmd = op_name,						\
++	.policy	= CONCAT_(GENL_MAGIC_FAMILY, _tla_nl_policy),	\
+ },
+ 
+ #define ZZZ_genl_ops		CONCAT_(GENL_MAGIC_FAMILY, _genl_ops)
+@@ -291,7 +292,6 @@ static struct genl_family ZZZ_genl_family __read_mostly = {
+ #ifdef COMPAT_HAVE_GENL_FAMILY_PARALLEL_OPS
+ 	.parallel_ops = true,
+ #endif
+-	.policy = CONCAT_(GENL_MAGIC_FAMILY, _tla_nl_policy),
+ };
+ 
+ /*

@@ -1,0 +1,9 @@
+ib_device__no_has_ops
+ib_post__no_const
+blk_queue_make_request__yes_present
+genl_policy__yes_in_ops
+bio_start_io_acct__no_present
+nla_nest_start_noflag__no_present
+nla_parse_deprecated__no_present
+allow_kernel_signal__no_present
+part_stat_h__no_present
