@@ -174,7 +174,8 @@ else
   sources += $(wildcard drbd-headers/linux/*.h)
 
   $(compat_patches): $(sources)
-	@. ./drbd-kernel-compat/gen_compat_patch.sh $@ $^
+  	@echo "skip gen compat patch."
+	#@. ./drbd-kernel-compat/gen_compat_patch.sh $@ $^
 
   compat: $(compat_patches)
 
